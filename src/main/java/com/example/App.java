@@ -21,7 +21,7 @@ public class App {
 
     static String comCode = "1407810004";
 
-    public static String doPost(String textData, String AESKey) {
+    public static String doPost(String url,String textData, String AESKey) {
         try {
             System.out.println(textData);
             String enryptJsonData = MyAESUtil.Encrypt("AES/ECB/PKCS5Padding", textData, AESKey);
@@ -39,7 +39,7 @@ public class App {
             postJsonObj.put("text", enryptJsonData);
             System.out.println(postJsonObj.toString(1));
             // 构建 发送json
-            String httpResult = MyHttp.postAPI32(postJsonObj.toString());
+            String httpResult = MyHttp.postAPI32(url,postJsonObj.toString());
 
             String aesDecode = MyAESUtil.Decrypt("AES/ECB/PKCS5Padding", httpResult, AESKey);
             System.out.printf("\n   aesDecode  :  \n %s\n", aesDecode);
@@ -57,9 +57,40 @@ public class App {
             gai.token = token;
 
             gai.sign = GenenateSign(String.format("comCode%s", gai.comCode));
+            String post32URL = "http://192.168.203.187:8092/company/supervision/enterpriseApi/getAlarmInfo";
 
             String jsonData = objTOString(gai);
-            doPost(jsonData, AESKey);
+            doPost(post32URL,jsonData, AESKey);
+
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+    }
+    public static void doAPI_netStatusAndTimeSynchronization(String token, String AESKey) {
+        try {
+
+            JSONObject postJsonObj = new JSONObject();
+            postJsonObj.put("comCode", comCode);
+            postJsonObj.put("brakeCode","brakeCode");
+            postJsonObj.put("brakeStatus","1");
+            postJsonObj.put("carDeviceStatus","1");
+            postJsonObj.put("videoDeviceCode","videoDeviceCode");
+            postJsonObj.put("videoDeviceStatus","1");
+            postJsonObj.put("token",token);
+            postJsonObj.put("sign","brakeCode");
+            
+            String sign = GenenateSign(String.format("comCode%sbrakeCode%sbrakeStatus%scarDeviceStatus%svideoDeviceCode%svideoDeviceStatus%s", 
+            comCode,
+            postJsonObj.getString("brakeCode"),
+            postJsonObj.getString("brakeStatus"),
+            postJsonObj.getString("carDeviceStatus"),
+            postJsonObj.getString("videoDeviceCode"),
+            postJsonObj.getString("videoDeviceStatus")));
+            postJsonObj.put("sign",sign);
+            String jsonData = postJsonObj.toString();
+            String post32URL = "http://192.168.203.187:8092/company/supervision/enterpriseApi/netStatusAndTimeSynchronization";
+
+            doPost(post32URL,jsonData, AESKey);
 
         } catch (Exception ex) {
             System.out.println(ex);
@@ -77,6 +108,7 @@ public class App {
 
         doAPI_getAlarmInfo(token.token, AESKey);
 
+        doAPI_netStatusAndTimeSynchronization(token.token, AESKey);
         System.out.println("\n\n\n   ----------OVER------------ \n\n");
     }
 }
