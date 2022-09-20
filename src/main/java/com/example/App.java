@@ -22,31 +22,47 @@ public class App {
     static String comCode = "1407810004";
 
     public static void doAPI_fullEncrypt(String algm, String token, String AESKey) {
+        /*//对文本全部加密，
+         报文结构
+         {
+            "comCode":"12345656",
+            "text":"aes加密的密文"
+         }
+         aes加密的密文 = 
+         {
+            "comCode":"123456",
+            "token":"xxxxxxxxxx",
+            "sign":"xxxxxxxxxx"
+         }
+
+         */
+        
         try {
             System.out.printf("\n\n######Begin#######  doAPI_fullEncrypt  [%s] \n\n",algm);
             System.out.println(algm);
-            String aesToken = MyAESUtil.Encrypt(algm, token, AESKey);
             getAlarmInfo gai = new getAlarmInfo();
             gai.comCode = comCode;
-            gai.token = aesToken;
+            gai.token = token;
 
             gai.sign = GenenateSign(String.format("comCode%s", gai.comCode));
 
             String jsonData = objTOString(gai);
 
             System.out.println(jsonData);
-            // String newSign = MyAESUtil.Encrypt(algm, obj.getString("sign"), AESKey);
             String enryptJsonData = MyAESUtil.Encrypt(algm, jsonData, AESKey);
 
-            String addd = MyAESUtil.Decrypt(algm, enryptJsonData, AESKey);
-            System.out.println("\naddd------------");
-            System.out.println(addd);
-            System.out.println("\n--------------------");
+            {
+                //验证 aes 加密
+                String decryptJson = MyAESUtil.Decrypt(algm, enryptJsonData, AESKey);
+                System.out.printf("\ndecryptJson  \n%s",decryptJson);
+
+                if(decryptJson!=jsonData)
+                {
+                    System.out.printf("\n ********error  aes decrypt failed.***********\n");
+                }
+            }
             JSONObject postJsonObj = new JSONObject();
             postJsonObj.put("comCode", comCode);
-
-            // String text = MyAESUtil.Encrypt(aglm, obj.toString(), AESKey);
-
             postJsonObj.put("text", enryptJsonData);
 
             // 1 对每个字段值加密
@@ -71,6 +87,21 @@ public class App {
     }
 
     public static void doAPI_paramEncrypt(String algm, String token, String AESKey) {
+        /*//只对参数值加密，
+         报文结构
+         {
+            "comCode":"12345656",
+            "text":"{"paramA":"aes加密的密文","paramB":"aes加密的密文"}"
+         }
+         
+         
+         {
+            "comCode":"123456",
+            "token":"xxxxxxxxxx",
+            "sign":"xxxxxxxxxx"
+          }
+
+         */
         try {
             System.out.printf("\n\n######Begin#######  doAPI_paramEncrypt  [%s] \n\n",algm);
             String aesToken = MyAESUtil.Encrypt(algm, token, AESKey);
@@ -115,16 +146,18 @@ public class App {
         // http获取token
         System.out.println("\n\n######Begin#######   get token\n\n");
         Token token = MyHttp.getToken();
-        // System.out.println("\n\n######Begin####### RSA Decrypt \n\n");
-        // RSA 
 
+        // RSA public Key解密  得到aes 密钥
         String AESKey = MyRSA.decrypt(token.screct);
         System.out.println("   AESKey\n" + AESKey);
 
         
-        doAPI("AES/CBC/PKCS5Padding", token.token, AESKey);
+        
+        //doAPI("AES/CBC/PKCS5Padding", token.token, AESKey);
+        doAPI_fullEncrypt("AES/ECB/PKCS5Padding", token.token, AESKey);
+
         // doAPI("AES/ECB/NoPadding", token.token, AESKey);
-        doAPI("AES/ECB/PKCS5Padding", token.token, AESKey);
+        //doAPI("AES/ECB/PKCS5Padding", token.token, AESKey);
 
         System.out.println("\n\n\n   ----------OVER------------ \n\n");        
     }
