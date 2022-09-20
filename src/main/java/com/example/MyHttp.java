@@ -24,7 +24,7 @@ public class MyHttp {
     static String postTokenUrl = "http://192.168.203.187:8092/company/supervision/enterpriseApi/token";// put in your
     static String post32URL = "http://192.168.203.187:8092/company/supervision/enterpriseApi/getAlarmInfo";
 
-    public static void postAPI32(String body) {
+    public static String postAPI32(String body) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(post32URL);
@@ -36,18 +36,8 @@ public class MyHttp {
 
             {
                 String result = EntityUtils.toString(entityOne);
-                System.out.println("EntityUtils\n" + result);
-                // CONVERT RESPONSE STRING TO JSON ARRAY
-                JSONObject jsonObj = new JSONObject(result);
-                // System.out.println(jsonObj.getString("msg"));
-                // System.out.println(jsonObj.getInt("code"));
-                JSONObject dataObj = jsonObj.getJSONObject("data");
-                // String aceSecret = (dataObj.getString("aceSecret"));
-                // String token = (dataObj.getString("token"));
-                // // String sign = (jsonObj.getString("sign"));
-                // Token a = new Token();
-                // a.screct = aceSecret;
-                // a.token = token;
+                System.out.println("远程返回\n" + result);
+                return result;
             }
 
         } catch (Exception ex) {
@@ -55,6 +45,7 @@ public class MyHttp {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
         }
+        return "";
     }
 
     public static Token getToken() {
